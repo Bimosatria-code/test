@@ -1,0 +1,90 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build-ui
+  - build-catalog
+  - build-carts
+  - build-orders
+  - build-checkout
+  - deploy
+
+variables:
+  DOCKER_REGISTRY: public.ecr.aws/aws-containers
+  AWS_DEFAULT_REGION: us-east-1
+  DOCKER_HOST: tcp://docker:2375
+
+build-ui:
+  stage: build-ui
+  services:
+    - docker:dind
+  before_script:
+    - amazon-linux-extras install docker
+    - aws --version
+    - docker --version
+  script:
+    - docker build -t $DOCKER_REGISTRY/ui:$CI_PIPELINE_IID . 
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/$ui:$CI_PIPELINE_IID
+
+build-catalog:
+  stage: build-catalog
+  services:
+    - docker:dind
+  before_script:
+    - amazon-linux-extras install docker
+    - aws --version
+    - docker --version
+  script:
+    - docker build -t $DOCKER_REGISTRY/catalog:$CI_PIPELINE_IID . 
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/catalog:$CI_PIPELINE_IID
+
+build-carts:
+  stage: build-carts
+  services:
+    - docker:dind
+  before_script:
+    - amazon-linux-extras install docker
+    - aws --version
+    - docker --version
+  script:
+    - docker build -t $DOCKER_REGISTRY/carts:$CI_PIPELINE_IID . 
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/carts:$CI_PIPELINE_IID
+
+build-orders:
+  stage: build-orders
+  services:
+    - docker:dind
+  before_script:
+    - amazon-linux-extras install docker
+    - aws --version
+    - docker --version
+  script:
+    - docker build -t $DOCKER_REGISTRY/orders:$CI_PIPELINE_IID . 
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/orders:$CI_PIPELINE_IID
+
+build-checkout:
+  stage: build-checkout
+  services:
+    - docker:dind
+  before_script:
+    - amazon-linux-extras install docker
+    - aws --version
+    - docker --version
+  script:
+    - docker build -t $DOCKER_REGISTRY/checkout:$CI_PIPELINE_IID . 
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/checkout:$CI_PIPELINE_IID
+    
+deploy:
+  stage: deploy
+  script:
+    - MYSQL_PASSWORD='<some password>' docker compose up -f dist/docker-compose/docker-compose.yml
+  only:
+    - master
+  when: manual
+  
