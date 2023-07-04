@@ -83,6 +83,7 @@ build-checkout:
 deploy:
   stage: deploy
   script:
+    - docker compose -f dist/docker-compose/docker-compose.yml down
     - MYSQL_PASSWORD='<some password>' docker compose up -f dist/docker-compose/docker-compose.yml
   only:
     - master
